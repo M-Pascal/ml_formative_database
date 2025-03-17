@@ -4,10 +4,24 @@ from schemas import Patient
 
 app = FastAPI()
 
-# Root Endpoint
+# Root Endpoint - Get all patients
 @app.get("/")
 def root():
-    return {"message": "Welcome to the Cancer Diagnosis API"}
+    conn = get_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection error")
+
+    cursor = conn.cursor()
+    try:
+        # Fetch all records from the Patients table
+        cursor.execute("SELECT * FROM Patients")
+        patients = cursor.fetchall()
+        return {"patients": patients}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
 # CREATE - Insert a new patient
 @app.post("/patients/")
