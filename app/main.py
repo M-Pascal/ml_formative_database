@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
-from .database import get_connection
-from .schemas import Patient
+from app.database import get_connection
+from app.schemas import Patient
 
 app = FastAPI()
 
