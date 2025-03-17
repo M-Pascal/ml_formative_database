@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: cancer_diagnosis_db_2coe
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 5432
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://cancer_diagnosis_db_2coe_user:1QiFDiVkbUa6YDbOxa66vWzb45m0JEsm@dpg-cvbv0ud6l47c73aijn6g-a.oregon-postgres.render.com/cancer_diagnosis_db_2coe
