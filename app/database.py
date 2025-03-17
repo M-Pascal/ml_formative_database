@@ -1,23 +1,26 @@
 import os
-import mysql.connector
-from mysql.connector import Error
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-def get_connection():
-    """Establish a database connection."""
+DATABASE_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+
+# Create database engine
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
+# Session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base class for models
+Base = declarative_base()
+
+# Dependency for database session
+def get_db():
+    db = SessionLocal()
     try:
-        conn = mysql.connector.connect(
-            host=os.getenv("DB_HOST", "n8oow.h.filess.io"),
-            user=os.getenv("DB_USER", "CancerDiagnosisDB_givensoon"),
-            password=os.getenv("DB_PASSWORD", "c54ce40e7a2d93bccf7f0c9095035c2f86d9bc36"),
-            database=os.getenv("DB_NAME", "CancerDiagnosisDB_givensoon"),
-            port=int(os.getenv("DB_PORT", 3307)),
-            autocommit=False
-        )
-        return conn
-    except Error as e:
-        print(f"Database Connection Error: {e}")
-        return None
+        yield db
+    finally:
+        db.close()
