@@ -1,45 +1,81 @@
 import os
 import pandas as pd
-import mysql.connector
-from mysql.connector import Error
+import psycopg2
+from psycopg2 import sql
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 # Load environment variables
 load_dotenv()
 
 # Load the dataset
 csv_file = "../dataset/data.csv"
-df = pd.read_csv(csv_file)
+df = pd.read_csv(csv_file, skipinitialspace=True)  # Fix column name spacing issues
 
-# Database connection parameters
-db_params = {
-    "host": os.getenv("DB_HOST"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_NAME"),
-    "port": int(os.getenv("DB_PORT"))
+# Validate columns
+required_columns = {
+    "id", "diagnosis", "radius_mean", "texture_mean", "perimeter_mean", "area_mean",
+    "smoothness_mean", "compactness_mean", "concavity_mean", "concave points_mean",
+    "symmetry_mean", "fractal_dimension_mean", "radius_se", "texture_se",
+    "perimeter_se", "area_se", "smoothness_se", "compactness_se", "concavity_se",
+    "concave points_se", "symmetry_se", "fractal_dimension_se", "radius_worst",
+    "texture_worst", "perimeter_worst", "area_worst", "smoothness_worst",
+    "compactness_worst", "concavity_worst", "concave points_worst",
+    "symmetry_worst", "fractal_dimension_worst"
 }
 
-try:
-    # Connect to MySQL
-    conn = mysql.connector.connect(**db_params)
-    cursor = conn.cursor()
-    print("Connected to MySQL")
+if not required_columns.issubset(df.columns):
+    missing_cols = required_columns - set(df.columns)
+    print(f"Error: Missing columns in dataset: {missing_cols}")
+    exit(1)
 
-    # Check if stored procedure exists
-    cursor.execute("SHOW PROCEDURE STATUS WHERE Name = 'InsertPatient';")
-    if cursor.fetchone() is None:
-        print("Stored Procedure 'InsertPatient' not found!")
+# Get DATABASE_URL from .env file
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    print("Error: DATABASE_URL not found in .env file")
+    exit(1)
+
+# Parse database URL
+try:
+    result = urlparse(DATABASE_URL)
+    db_params = {
+        "dbname": result.path[1:],  # Remove the leading '/'
+        "user": result.username,
+        "password": result.password,
+        "host": result.hostname,
+        "port": result.port or 5432  # Default PostgreSQL port
+    }
+except Exception as e:
+    print(f"Error parsing DATABASE_URL: {e}")
+    exit(1)
+
+try:
+    # Connect to PostgreSQL
+    conn = psycopg2.connect(**db_params)
+    cursor = conn.cursor()
+    print("Connected to PostgreSQL")
+
+    # Check if tables exist
+    cursor.execute("""
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_name IN ('patients', 'tumor_mean', 'tumor_se', 'tumor_worst');
+    """)
+    existing_tables = {row[0] for row in cursor.fetchall()}
+
+    required_tables = {'patients', 'tumor_mean', 'tumor_se', 'tumor_worst'}
+    if not required_tables.issubset(existing_tables):
+        print("Error: Some required tables are missing in the database.")
+        exit(1)
 
     # SQL queries
-    insert_patient = "CALL InsertPatient(%s, %s);"
-
     insert_tumor_mean = """
     INSERT INTO tumor_mean (
         id, radius_mean, texture_mean, perimeter_mean, area_mean, 
         smoothness_mean, compactness_mean, concavity_mean, concave_points_mean, 
         symmetry_mean, fractal_dimension_mean
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (id) DO NOTHING;
     """
 
     insert_tumor_se = """
@@ -47,7 +83,8 @@ try:
         id, radius_se, texture_se, perimeter_se, area_se, 
         smoothness_se, compactness_se, concavity_se, concave_points_se, 
         symmetry_se, fractal_dimension_se
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (id) DO NOTHING;
     """
 
     insert_tumor_worst = """
@@ -55,45 +92,41 @@ try:
         id, radius_worst, texture_worst, perimeter_worst, area_worst, 
         smoothness_worst, compactness_worst, concavity_worst, concave_points_worst, 
         symmetry_worst, fractal_dimension_worst
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (id) DO NOTHING;
     """
 
-    # Insert data into MySQL with error handling
+    # Insert data into PostgreSQL
     for index, row in df.iterrows():
-        patient_id = str(row["id"])
-        print(f"🔹 Inserting row {index + 1} (ID: {patient_id})...")
+        patient_id = str(row["id"])  # Convert to string for consistency
+        print(f"Inserting row {index + 1} (ID: {patient_id})...")
 
         try:
-            cursor.execute(insert_patient, (patient_id, row["diagnosis"]))
-            cursor.execute(insert_tumor_mean, (
-                patient_id, row["radius_mean"], row["texture_mean"], row["perimeter_mean"], row["area_mean"],
-                row["smoothness_mean"], row["compactness_mean"], row["concavity_mean"], row["concave points_mean"],
-                row["symmetry_mean"], row["fractal_dimension_mean"]
-            ))
-            cursor.execute(insert_tumor_se, (
-                patient_id, row["radius_se"], row["texture_se"], row["perimeter_se"], row["area_se"],
-                row["smoothness_se"], row["compactness_se"], row["concavity_se"], row["concave points_se"],
-                row["symmetry_se"], row["fractal_dimension_se"]
-            ))
-            cursor.execute(insert_tumor_worst, (
-                patient_id, row["radius_worst"], row["texture_worst"], row["perimeter_worst"], row["area_worst"],
-                row["smoothness_worst"], row["compactness_worst"], row["concavity_worst"], row["concave points_worst"],
-                row["symmetry_worst"], row["fractal_dimension_worst"]
-            ))
+            cursor.execute("BEGIN;")  # Start transaction
+            cursor.callproc("InsertOrUpdatePatient", (patient_id, row["diagnosis"]))  # Use stored procedure
+            cursor.execute(insert_tumor_mean, (patient_id, row["radius_mean"], row["texture_mean"], row["perimeter_mean"], row["area_mean"],
+                                               row["smoothness_mean"], row["compactness_mean"], row["concavity_mean"], row["concave points_mean"],
+                                               row["symmetry_mean"], row["fractal_dimension_mean"]))
+            cursor.execute(insert_tumor_se, (patient_id, row["radius_se"], row["texture_se"], row["perimeter_se"], row["area_se"],
+                                             row["smoothness_se"], row["compactness_se"], row["concavity_se"], row["concave points_se"],
+                                             row["symmetry_se"], row["fractal_dimension_se"]))
+            cursor.execute(insert_tumor_worst, (patient_id, row["radius_worst"], row["texture_worst"], row["perimeter_worst"], row["area_worst"],
+                                                row["smoothness_worst"], row["compactness_worst"], row["concavity_worst"], row["concave points_worst"],
+                                                row["symmetry_worst"], row["fractal_dimension_worst"]))
+            conn.commit()  # Commit transaction
+        except KeyError as ke:
+            conn.rollback()  # Rollback on error
+            print(f"KeyError: Missing column {ke} in row {index + 1} (ID: {patient_id}). Check dataset structure.")
+        except psycopg2.Error as e:
+            conn.rollback()  # Rollback on error
+            print(f"Database error inserting row {index + 1} (ID: {patient_id}): {e}")
 
-        except Error as e:
-            print(f"Error inserting row {index + 1} (ID: {patient_id}): {e}")
-
-    # Commit changes
-    conn.commit()
     print("Data successfully inserted into Database.")
-
-except Error as e:
-    print(f"MySQL Connection Error: {e}")
-
+except psycopg2.Error as e:
+    print(f"Error connecting to PostgreSQL: {e}")
 finally:
-    if 'cursor' in locals():
+    if cursor:
         cursor.close()
-    if 'conn' in locals():
+    if conn:
         conn.close()
-    print("MySQL connection closed.")
+        print("PostgreSQL connection closed.")
