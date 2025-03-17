@@ -1,42 +1,88 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-import uvicorn
-
-from database import engine, Base, get_db
-import crud, models, schemas
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
+from fastapi import FastAPI, HTTPException, Depends
+from database import get_connection
+from schemas import Patient
 
 app = FastAPI()
 
+# Root Endpoint
 @app.get("/")
 def root():
     return {"message": "Welcome to the Cancer Diagnosis API"}
 
-@app.post("/patients/", response_model=schemas.PatientResponse)
-def create_patient(patient: schemas.PatientCreate, db: Session = Depends(get_db)):
-    return crud.create_patient(db, patient)
+# CREATE - Insert a new patient
+@app.post("/patients/")
+def create_patient(patient: Patient):
+    conn = get_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection error")
+    
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO Patients (id, diagnosis) VALUES (%s, %s)", (patient.id, patient.diagnosis))
+        conn.commit()
+        return {"message": "Patient added successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
-@app.get("/patients/{patient_id}", response_model=schemas.PatientResponse)
-def read_patient(patient_id: str, db: Session = Depends(get_db)):
-    patient = crud.get_patient(db, patient_id)
-    if not patient:
+# READ - Get a patient by ID
+@app.get("/patients/{patient_id}")
+def read_patient(patient_id: str):
+    conn = get_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection error")
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM Patients WHERE id = %s", (patient_id,))
+        patient = cursor.fetchone()
+        if patient:
+            return patient
         raise HTTPException(status_code=404, detail="Patient not found")
-    return patient
+    finally:
+        cursor.close()
+        conn.close()
 
-@app.put("/patients/{patient_id}", response_model=schemas.PatientResponse)
-def update_patient(patient_id: str, patient: schemas.PatientUpdate, db: Session = Depends(get_db)):
-    updated_patient = crud.update_patient(db, patient_id, patient)
-    if not updated_patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
-    return updated_patient
+# UPDATE - Update a patient's diagnosis
+@app.put("/patients/{patient_id}")
+def update_patient(patient_id: str, patient: Patient):
+    conn = get_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection error")
 
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE Patients SET diagnosis = %s WHERE id = %s", (patient.diagnosis, patient_id))
+        conn.commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return {"message": "Patient updated successfully"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# DELETE - Remove a patient
 @app.delete("/patients/{patient_id}")
-def delete_patient(patient_id: str, db: Session = Depends(get_db)):
-    if not crud.delete_patient(db, patient_id):
-        raise HTTPException(status_code=404, detail="Patient not found")
-    return {"message": "Patient deleted successfully"}
+def delete_patient(patient_id: str):
+    conn = get_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection error")
 
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM Patients WHERE id = %s", (patient_id,))
+        conn.commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return {"message": "Patient deleted successfully"}
+    finally:
+        cursor.close()
+        conn.close()
+
+# Run the FastAPI app using Uvicorn
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

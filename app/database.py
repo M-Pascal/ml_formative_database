@@ -1,26 +1,23 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-DATABASE_URL = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-
-# Create database engine
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-
-# Session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for models
-Base = declarative_base()
-
-# Dependency for database session
-def get_db():
-    db = SessionLocal()
+def get_connection():
+    """Establish a connection to the PostgreSQL database."""
     try:
-        yield db
-    finally:
-        db.close()
+        conn = psycopg2.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            cursor_factory=RealDictCursor
+        )
+        return conn
+    except Exception as e:
+        print(f"Database Connection Error: {e}")
+        return None
