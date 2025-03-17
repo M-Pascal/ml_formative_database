@@ -1,4 +1,4 @@
-# ML_Formative1_Database_Grp_6# Breast Cancer Database Setup and Prediction System
+# Breast Cancer Database Setup and Prediction System
 
 ## Overview
 This project involves designing and implementing a database system for breast cancer data, creating API endpoints for CRUD operations, and developing a machine learning prediction system. The database is implemented using both MySQL (relational) and MongoDB (NoSQL). The API is built using FastAPI, and the prediction system uses a pre-trained machine learning model.
