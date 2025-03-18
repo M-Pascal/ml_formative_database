@@ -97,6 +97,44 @@ def read_patient(patient_id: str):
         cursor.close()
         conn.close()
 
+# ====================
+# READ - Get the latest patient entry
+@app.get("/patients/latest")
+def get_latest_patient():
+    conn = get_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection error")
+   
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM Patients ORDER BY id DESC LIMIT 1")
+        patient = cursor.fetchone()
+
+        if not patient:
+            raise HTTPException(status_code=404, detail="No patient data found")
+
+        # Fetch related tumor data
+        cursor.execute("SELECT * FROM tumor_mean WHERE id = %s", (patient[0],))
+        tumor_mean = cursor.fetchone()
+
+        cursor.execute("SELECT * FROM tumor_se WHERE id = %s", (patient[0],))
+        tumor_se = cursor.fetchone()
+
+        cursor.execute("SELECT * FROM tumor_worst WHERE id = %s", (patient[0],))
+        tumor_worst = cursor.fetchone()
+
+        return {
+            "id": patient[0],
+            "diagnosis": patient[1],
+            "tumor_mean": tumor_mean,
+            "tumor_se": tumor_se,
+            "tumor_worst": tumor_worst,
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+# ==========
 
 # UPDATE - Update a patient's diagnosis and tumor data
 @app.put("/patients/{patient_id}")
