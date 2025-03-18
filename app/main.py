@@ -106,26 +106,36 @@ def get_latest_patient():
    
     cursor = conn.cursor()
     try:
-        # Get the last inserted ID
+        # Get the latest patient ID
         cursor.execute("SELECT MAX(id) FROM Patients")
         latest_id = cursor.fetchone()[0]
+
+        print(f"DEBUG: Latest Patient ID: {latest_id}")  # Debugging
 
         if not latest_id:
             raise HTTPException(status_code=404, detail="No patient data found")
 
-        # Fetch the latest patient record using the ID
+        # Fetch the patient record using latest_id
         cursor.execute("SELECT * FROM Patients WHERE id = %s", (latest_id,))
         patient = cursor.fetchone()
+
+        print(f"DEBUG: Patient Data: {patient}")  # Debugging
+
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
 
         # Fetch related tumor data
         cursor.execute("SELECT * FROM tumor_mean WHERE id = %s", (latest_id,))
         tumor_mean = cursor.fetchone()
+        print(f"DEBUG: Tumor Mean: {tumor_mean}")  # Debugging
 
         cursor.execute("SELECT * FROM tumor_se WHERE id = %s", (latest_id,))
         tumor_se = cursor.fetchone()
+        print(f"DEBUG: Tumor SE: {tumor_se}")  # Debugging
 
         cursor.execute("SELECT * FROM tumor_worst WHERE id = %s", (latest_id,))
         tumor_worst = cursor.fetchone()
+        print(f"DEBUG: Tumor Worst: {tumor_worst}")  # Debugging
 
         return {
             "id": patient[0],
@@ -137,6 +147,7 @@ def get_latest_patient():
     finally:
         cursor.close()
         conn.close()
+
 
 
 # ==========
