@@ -98,7 +98,6 @@ def read_patient(patient_id: str):
         conn.close()
 
 # ====================
-# READ - Get the latest patient entry
 @app.get("/patients/latest")
 def get_latest_patient():
     conn = get_connection()
@@ -107,20 +106,25 @@ def get_latest_patient():
    
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT * FROM Patients ORDER BY id DESC LIMIT 1")
-        patient = cursor.fetchone()
+        # Get the last inserted ID
+        cursor.execute("SELECT MAX(id) FROM Patients")
+        latest_id = cursor.fetchone()[0]
 
-        if not patient:
+        if not latest_id:
             raise HTTPException(status_code=404, detail="No patient data found")
 
+        # Fetch the latest patient record using the ID
+        cursor.execute("SELECT * FROM Patients WHERE id = %s", (latest_id,))
+        patient = cursor.fetchone()
+
         # Fetch related tumor data
-        cursor.execute("SELECT * FROM tumor_mean WHERE id = %s", (patient[0],))
+        cursor.execute("SELECT * FROM tumor_mean WHERE id = %s", (latest_id,))
         tumor_mean = cursor.fetchone()
 
-        cursor.execute("SELECT * FROM tumor_se WHERE id = %s", (patient[0],))
+        cursor.execute("SELECT * FROM tumor_se WHERE id = %s", (latest_id,))
         tumor_se = cursor.fetchone()
 
-        cursor.execute("SELECT * FROM tumor_worst WHERE id = %s", (patient[0],))
+        cursor.execute("SELECT * FROM tumor_worst WHERE id = %s", (latest_id,))
         tumor_worst = cursor.fetchone()
 
         return {
@@ -133,6 +137,7 @@ def get_latest_patient():
     finally:
         cursor.close()
         conn.close()
+
 
 # ==========
 
