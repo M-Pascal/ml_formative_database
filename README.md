@@ -1,7 +1,7 @@
 # Breast Cancer Database Setup and Prediction System
 
 ## Overview
-This project is designed to create a comprehensive system for managing breast cancer data, including database design, API development, and a machine learning-based prediction system. The system uses both **MySQL** (relational database) and **MongoDB** (NoSQL database) to store patient and tumor data. The API is built using **FastAPI**, and the prediction system uses a pre-trained machine learning model to classify tumors as **Malignant** or **Benign**.
+This project is designed to create a comprehensive system for managing breast cancer data, including database design, API development, and a machine learning-based prediction system. The system uses both **PostgreSQL** (relational database) and **MongoDB** (NoSQL database) to store patient and tumor data. The API is built using **FastAPI**, and the prediction system uses a pre-trained machine learning model to classify tumors as **Malignant** or **Benign**.
 
 The purpose of this assignment is to:
 1. Design and implement a robust database system for storing breast cancer data.
