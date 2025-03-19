@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 
 # API URL for fetching the latest patient entry
-API_URL = "https://ml-formative-database.onrender.com/patients/last"
+API_URL = "https://ml-formative-database.onrender.co/patients/last"
 
 # Path to the saved model
 MODEL_PATH = "./saved_best_model/logistic_regression.pkl"
