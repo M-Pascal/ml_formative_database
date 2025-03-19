@@ -13,7 +13,7 @@ The purpose of this assignment is to:
 ## Database Design and Implementation
 
 ### Entity Relationship Diagram (ERD)
-The Entity Relationship Diagram (ERD) for the database schema can be viewed [here](https://github.com/M-Pascal/ML_Formative1_Database_Grp_6/blob/main/ERD_diagram/ERD_diagram.jpg).
+The Entity Relationship Diagram (ERD) for the database schema can be viewed [here](https://github.com/M-Pascal/ml_formative_database/blob/main/ERD/Entity_Relational_Diagram.png).
 
 ### Step 1: Running the SQL Schema
 To set up the MySQL database, run the `sqlSchema.sql` file. This script creates the required tables and sets up the database schema.
