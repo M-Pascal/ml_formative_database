@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 import random
 import string
-from database import get_connection
+from app.database import get_connection
 from psycopg2.extras import RealDictCursor
 
 app = FastAPI()
