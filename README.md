@@ -82,12 +82,10 @@ API Repository
 ### Features
 Patient Management:
 - Create, read, update, and delete patient records.
-
 - Store patient id, diagnosis, and created_at timestamp.
 
 Tumor Data Management:
 - Create, read, update, and delete tumor data records.
-
 - Store tumor characteristics (e.g., radius_mean, texture_mean, perimeter_mean).
 
 Diagnosis Logs:
@@ -96,24 +94,16 @@ Diagnosis Logs:
 Endpoints
 Patient Endpoints
 - POST /patients/: Create a new patient.
-
 - GET /patients/: Retrieve all patients.
-
 - GET /patients/{patient_id}: Retrieve a specific patient by ID.
-
 - PUT /patients/{patient_id}: Update a patient by ID.
-
 - DELETE /patients/{patient_id}: Delete a patient by ID.
 
 Tumor Data Endpoints
 - POST /tumor_data/: Create new tumor data.
-
 - GET /tumor_data/: Retrieve all tumor data.
-
 - GET /tumor_data/{tumor_id}: Retrieve specific tumor data by ID.
-
 - PUT /tumor_data/{tumor_id}: Update tumor data by ID.
-
 - DELETE /tumor_data/{tumor_id}: Delete tumor data by ID.
 
 Diagnosis Logs Endpoints
@@ -123,14 +113,11 @@ Diagnosis Logs Endpoints
 This system trains a machine learning model to predict breast cancer diagnosis (malignant or benign) and offers multiple ways to use it:
 
 - **Direct Prediction:** Use the model directly with CSV data.
-
 - **API-Based Prediction:** Fetch data from the API and make predictions.
-
 - **Test Server:** For demonstrations without a database.
 
 Prediction Endpoints
 - POST /predict: Predict diagnosis based on input data.
-
 - GET /predict-latest: Predict diagnosis for the latest patient in the database.
 
 ### Fetch and Predict Script
@@ -157,21 +144,18 @@ Open your browser and navigate to:
 
 ## Task Distribution
 >   - **Task 1 (Database Design and SQL Implementation & MongoDB Implementation):** Pascal Mugisha
-    - **Task 2 (API Development):** Jean Chrisostome Dufitumukiza
-    - **Task 3 (Fetch and Prediction):** Ruth Ishimwe
+>    - **Task 2 (API Development):** Jean Chrisostome Dufitumukiza
+>    - **Task 3 (Fetch and Prediction):** Ruth Ishimwe
 
 ## Purpose of the Assignment
 The purpose of this assignment is to:
 
 - Demonstrate the ability to design and implement a relational and NoSQL database system.
-
 - Develop a RESTful API for managing patient and tumor data.
-
 - Build a machine learning-based prediction system to classify tumors as malignant or benign.
-
 - Integrate all components into a cohesive system that can be used for real-world applications.
 
 ### **Done By:**
 >   - Pascal Mugisha
-    - Jean Chrisostome Dufitumukiza
-    - Ruth Iradukunda
+>    - Jean Chrisostome Dufitumukiza
+>   - Ruth Iradukunda
