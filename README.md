@@ -76,8 +76,8 @@ patients_collection.insert_many(patients_data_dict)
 ## The API - Task 2
 This is a FastAPI-based application for managing patient data and tumor characteristics. It provides endpoints for creating, reading, updating, and deleting records.
 
-API Repository
-- GitHub: https://github.com/M-Pascal/ml_formative_database.git
+FastAPI hosted on render:
+> [https://ml-formative-database.onrender.com/docs](https://ml-formative-database.onrender.com/docs)
 
 ### Features
 Patient Management:
